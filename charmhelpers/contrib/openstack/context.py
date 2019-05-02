@@ -352,6 +352,19 @@ class IdentityServiceContext(OSContextGenerator):
             return cachedir
         return None
 
+    def _auth_uri_deprecated(self):
+        """Returns if auth_uri option is deprecated in deployed
+        keystonemiddleware version.
+        """
+        pkg = 'python3-keystonemiddleware'
+
+        # If we really use Python3 for keystonemiddleware
+        if filter_installed_packages((pkg,)):
+            pkg = 'python-keystonemiddleware'
+
+        return bool(CompareOpenStackReleases(os_release(pkg)) >= 'stein',
+                    base='icehouse')
+
     def __call__(self):
         log('Generating template context for ' + self.rel_name, level=DEBUG)
         ctxt = {}
@@ -380,7 +393,10 @@ class IdentityServiceContext(OSContextGenerator):
                              'admin_password': rdata.get('service_password'),
                              'service_protocol': svc_protocol,
                              'auth_protocol': auth_protocol,
-                             'api_version': api_version})
+                             'api_version': api_version,
+                             'auth_uri_deprecated':
+                                self._auth_uri_deprecated(),
+                             })
 
                 if float(api_version) > 2:
                     ctxt.update({'admin_domain_name':
